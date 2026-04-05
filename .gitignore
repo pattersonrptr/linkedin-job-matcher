@@ -22,3 +22,5 @@ my_profile.txt
 .vscode/
 *.swp
 my_profile.txt
+
+.claude/
