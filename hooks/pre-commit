@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Pre-commit hook: secrets scanner + dependency check
+# Installed via hooks/install.sh
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Secrets check (BLOCKS on match)
+bash "$SCRIPT_DIR/pre-commit-secrets.sh" || exit 1
+
+# Dependency check (WARNS only)
+bash "$SCRIPT_DIR/check-deps.sh"
+
+exit 0

@@ -1,0 +1,24 @@
+# Secrets
+.env
+*.env
+my_profile.txt
+*.key
+my_profile.txt
+*credentials*
+my_profile.txt
+
+# Generated
+resultados.json
+*.partial.jsonl
+my_profile.txt
+
+# Python
+__pycache__/
+*.pyc
+my_profile.txt
+
+# IDE
+.idea/
+.vscode/
+*.swp
+my_profile.txt

@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Pre-push hook: block push to main/master
+# Installed via hooks/install.sh
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+bash "$SCRIPT_DIR/pre-push-no-main.sh"
+exit $?
