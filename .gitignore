@@ -1,26 +1,28 @@
 # Secrets
 .env
 *.env
-my_profile.txt
 *.key
-my_profile.txt
 *credentials*
+
+# Profile (personal info)
 my_profile.txt
 
 # Generated
 resultados.json
 *.partial.jsonl
-my_profile.txt
+job_matcher.db
 
 # Python
 __pycache__/
 *.pyc
-my_profile.txt
 
 # IDE
 .idea/
 .vscode/
 *.swp
-my_profile.txt
 
-.claude/
+# Local Claude settings
+.claude/settings.local.json
+
+# Venv
+.venv/

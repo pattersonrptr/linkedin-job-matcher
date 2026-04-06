@@ -1,0 +1,40 @@
+[scraper]
+max_jobs = 30
+listed_at = 604800  # 7 days in seconds
+delay_min = 2.0
+delay_max = 5.0
+cooldown_after = 10  # pause after N jobs
+cooldown_seconds_min = 30
+cooldown_seconds_max = 120
+
+[llm]
+model = "qwen/qwen3.6-plus:free"
+max_tokens = 1024
+temperature = 0.3
+timeout = 30
+
+[app]
+min_score = 6
+save_json = true
+output_csv = "resultados.csv"
+
+[[queries]]
+query = "Python Backend Engineer"
+location = "Brazil"
+experience = ["4"]  # Mid-Senior
+job_type = ["F"]     # Full-time
+remote = ["2", "3"]  # Remote, Hybrid
+
+[[queries]]
+query = "Software Engineer Cloud GCP AWS"
+location = "Brazil"
+experience = ["4"]
+job_type = ["F"]
+remote = ["2", "3"]
+
+[[queries]]
+query = "DevOps Platform Engineer Terraform"
+location = "Brazil"
+experience = ["4"]
+job_type = ["F"]
+remote = ["2", "3"]

@@ -1,0 +1,9 @@
+# No Windows, instale lxml ANTES dos demais: pip install lxml --only-binary :all:
+lxml
+beautifulsoup4
+linkedin-api>=2.3.0
+openai
+python-dotenv
+rich
+tqdm
+undetected-chromedriver
