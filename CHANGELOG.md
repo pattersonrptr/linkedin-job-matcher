@@ -9,6 +9,13 @@ Versionamento segue [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added (feature/streamlit-web)
+- `web/app.py` — interface web Streamlit completa com 3 abas:
+  - **Resultados**: filtros ao vivo (score, work_type, país, salário, easy-apply, empresa), cards expandíveis e exportação CSV
+  - **Executar Busca**: dispara scraping + análise LLM pela interface, exibindo output em tempo real
+  - **Banco de Dados**: métricas gerais, tabela completa e exportação CSV de todos os dados
+- `requirements.txt`: adicionado `streamlit>=1.35.0`
+
 ### Added (feature/job-filters)
 - `models.py`: 9 novos campos em `JobResult` — `is_closed`, `is_easy_apply`, `work_type`, `has_salary`, `salary_min`, `salary_max`, `salary_currency`, `listed_at_ts`, `country`
 - `models.py`: dataclass `JobFilter` com filtros de score, país, tipo de trabalho, salário, moeda, easy-apply, empresa e ordenação
