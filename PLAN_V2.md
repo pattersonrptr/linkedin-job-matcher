@@ -254,7 +254,7 @@ Mapear para segundos passados ao `search_jobs`:
 
 ## Phase 8: Streamlit Web Interface
 
-> Status: [ ] pending — branch `feature/streamlit-web`
+> Status: [x] **completo** — branch `feature/streamlit-web`
 
 ### 8.1 Requisitos funcionais
 - Visualizar vagas do DB com filtros ao vivo (todos os filtros da Phase 7)
