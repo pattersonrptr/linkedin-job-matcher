@@ -1,6 +1,7 @@
 [scraper]
 max_jobs = 30
 listed_at = 604800  # 7 days in seconds
+skip_closed = true  # ignorar vagas com estado != "LISTED"
 delay_min = 2.0
 delay_max = 5.0
 cooldown_after = 10  # pause after N jobs
