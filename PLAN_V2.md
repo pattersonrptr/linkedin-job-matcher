@@ -198,4 +198,80 @@ python main.py --analyze-only
 ## Risks
 - `linkedin-api` requires a valid LinkedIn session cookie — user must grab it from browser
 - OpenRouter API may have different availability per region
+
+---
+
+## Phase 7: Job Filters & New Fields
+
+> Status: [ ] pending — branch `feature/job-filters`
+
+### 7.1 New fields in `JobResult` (and DB)
+
+| Field | Type | Source | Description |
+|---|---|---|---|
+| `is_closed` | `bool` | `details["jobState"]` | Se `jobState != "LISTED"`, vaga está fechada |
+| `is_easy_apply` | `bool` | `details["applyMethod"]` | Chave começa com `...ComplexOnsiteApply` |
+| `work_type` | `str` | `details["workplaceTypes"]` | `"remote"` / `"hybrid"` / `"onsite"` / `""` |
+| `has_salary` | `bool` | `details.get("salary")` | Se a vaga divulga faixa salarial |
+| `salary_min` | `int\|None` | `details["salary"]` | Valor mínimo (na moeda indicada) |
+| `salary_max` | `int\|None` | `details["salary"]` | Valor máximo |
+| `salary_currency` | `str` | `details["salary"]` | `"USD"` / `"BRL"` / `"EUR"` etc. |
+| `country` | `str` | parsed de `formattedLocation` | Último token da string de localização |
+| `listed_at_ts` | `int` | `details["listedAt"]` | Timestamp Unix da postagem |
+
+### 7.2 Scraper changes
+- [ ] Extrair todos os campos acima em `search_jobs`
+- [ ] Skip automático de vagas fechadas (`is_closed=True`) durante scraping — configurável com `skip_closed` (default `True`)
+
+### 7.3 New `listed_at` CLI override (`--date-posted`)
+Mapear para segundos passados ao `search_jobs`:
+- `any` → sem filtro (valor grande)
+- `24h` → `86400`
+- `week` → `604800` (default atual)
+- `month` → `2592000`
+
+### 7.4 New CLI display/show filters
+
+| Flag | Tipo | Exemplo |
+|---|---|---|
+| `--skip-closed / --no-skip-closed` | flag | default: skip ativado |
+| `--country [national\|international\|all]` | choice | `--country international` |
+| `--has-salary` | flag | só vagas com salário divulgado |
+| `--min-salary VALUE` | int | `--min-salary 5000` |
+| `--currency CODE` | str | `--currency USD` |
+| `--easy-apply` | flag | só Easy Apply |
+| `--work-type [remote\|hybrid\|onsite\|all]` | choice | `--work-type remote` |
+| `--company PATTERN` | str | `--company "Google"` (case-insensitive) |
+| `--date-posted [any\|24h\|week\|month]` | choice | `--date-posted week` |
+| `--sort [score\|date]` | choice | `--sort date` |
+
+### 7.5 Storage changes
+- [ ] Adicionar novas colunas ao `_SCHEMA`
+- [ ] Adicionar `_migrate_db()` com `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`
+- [ ] Atualizar `get_filtered_jobs()` para aceitar `FilterParams` dataclass
+
+---
+
+## Phase 8: Streamlit Web Interface
+
+> Status: [ ] pending — branch `feature/streamlit-web`
+
+### 8.1 Requisitos funcionais
+- Visualizar vagas do DB com filtros ao vivo (todos os filtros da Phase 7)
+- Disparar scraping e análise pela interface (sem precisar do terminal)
+- Ordenação por score ou data
+- Card expandível por vaga com todos os detalhes
+- Link direto para a vaga no LinkedIn
+- Exportar CSV dos resultados filtrados
+
+### 8.2 Stack
+- `streamlit` — framework da interface
+- `streamlit-extras` ou componentes nativos para cards expandíveis
+- Backend: chama as mesmas funções de `storage.py`, `scraper.py`, `analyzer.py`
+
+### 8.3 Arquivo: `web/app.py`
+- Sidebar com todos os filtros
+- Área principal com tabela/cards de resultados
+- Seção "Executar busca" com configurações e botão
+- Seção "Resultado da análise" com progresso em tempo real (st.empty/placeholder)
 - LinkedIn API changes can break `linkedin-api` — but fixes are usually faster than Selenium-based approaches
