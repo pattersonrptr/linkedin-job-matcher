@@ -328,6 +328,8 @@ def _run_search_subprocess(
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             cwd=str(ROOT),
             env={**os.environ},
         )
