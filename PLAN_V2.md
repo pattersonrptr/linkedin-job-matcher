@@ -203,7 +203,7 @@ python main.py --analyze-only
 
 ## Phase 7: Job Filters & New Fields
 
-> Status: [ ] pending — branch `feature/job-filters`
+> Status: [x] **completo** — branch `feature/job-filters`
 
 ### 7.1 New fields in `JobResult` (and DB)
 
@@ -220,8 +220,8 @@ python main.py --analyze-only
 | `listed_at_ts` | `int` | `details["listedAt"]` | Timestamp Unix da postagem |
 
 ### 7.2 Scraper changes
-- [ ] Extrair todos os campos acima em `search_jobs`
-- [ ] Skip automático de vagas fechadas (`is_closed=True`) durante scraping — configurável com `skip_closed` (default `True`)
+- [x] Extrair todos os campos acima em `search_jobs`
+- [x] Skip automático de vagas fechadas (`is_closed=True`) durante scraping — configurável com `skip_closed` (default `True`)
 
 ### 7.3 New `listed_at` CLI override (`--date-posted`)
 Mapear para segundos passados ao `search_jobs`:
@@ -246,9 +246,9 @@ Mapear para segundos passados ao `search_jobs`:
 | `--sort [score\|date]` | choice | `--sort date` |
 
 ### 7.5 Storage changes
-- [ ] Adicionar novas colunas ao `_SCHEMA`
-- [ ] Adicionar `_migrate_db()` com `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`
-- [ ] Atualizar `get_filtered_jobs()` para aceitar `FilterParams` dataclass
+- [x] Adicionar novas colunas ao `_SCHEMA`
+- [x] Adicionar `_migrate_db()` com `ALTER TABLE ... ADD COLUMN`
+- [x] Atualizar `get_filtered_jobs()` para aceitar `JobFilter` dataclass
 
 ---
 
