@@ -66,7 +66,7 @@ def _migrate_db(conn: sqlite3.Connection) -> None:
 
 def init_db(db_path: str | Path = "job_matcher.db") -> sqlite3.Connection:
     """Inicializa o banco SQLite, aplica schema e migrações, retorna conexão."""
-    conn = sqlite3.connect(str(db_path))
+    conn = sqlite3.connect(str(db_path), check_same_thread=False)
     conn.row_factory = sqlite3.Row
     conn.execute(_SCHEMA)
     conn.commit()
