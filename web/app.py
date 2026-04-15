@@ -160,11 +160,13 @@ def render_job_card(job: JobResult) -> None:
             if job.link:
                 st.link_button("🔗 Ver no LinkedIn", job.link)
 
-        if job.matched_skills or job.missing_skills:
-            c1, c2 = st.columns(2)
+        if job.matched_skills or job.familiar_skills or job.missing_skills:
+            c1, c2, c3 = st.columns(3)
             with c1:
                 st.success("**Skills compatíveis:**  \n" + (", ".join(job.matched_skills) or "—"))
             with c2:
+                st.info("**Skills familiares:**  \n" + (", ".join(job.familiar_skills) or "—"))
+            with c3:
                 st.error("**Skills em falta:**  \n" + (", ".join(job.missing_skills) or "nenhuma lacuna crítica"))
 
 

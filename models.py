@@ -17,6 +17,7 @@ class JobResult:
     description: str = ""
     score: int | None = None
     matched_skills: list[str] = field(default_factory=list)
+    familiar_skills: list[str] = field(default_factory=list)
     missing_skills: list[str] = field(default_factory=list)
     summary: str = ""
     seniority_match: str = ""

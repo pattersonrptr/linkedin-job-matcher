@@ -18,24 +18,42 @@ Você é um especialista em recrutamento técnico com 20 anos de experiência \
 em engenharia de software. Sua tarefa é analisar a compatibilidade entre \
 o candidato descrito e a vaga de emprego fornecida.
 
+O perfil do candidato contém duas seções de skills:
+1. "Stack principal" — tecnologias com experiência profissional comprovada. Peso ALTO.
+2. "Conhecimentos adicionais" — tecnologias que o candidato conhece por \
+   projetos pessoais, faculdade ou estudo, mas sem uso profissional extenso. Peso MÉDIO. \
+   Cada item indica o nível (básico, intermediário, avançado).
+
+Regras importantes:
+- Skills da seção "Conhecimentos adicionais" NÃO devem ir para missing_skills. \
+  Coloque-as em familiar_skills.
+- Skills que a vaga pede e o candidato NÃO tem em nenhuma das duas seções \
+  vão para missing_skills.
+- Uma skill familiar pode contribuir positivamente para o score, mas com \
+  peso menor do que uma skill profissional. Por exemplo: se a vaga pede Java \
+  e o candidato tem Java como "intermediário" em conhecimentos adicionais, \
+  isso é melhor do que não saber Java, mas não equivale a experiência profissional.
+
 Retorne APENAS um JSON válido com a seguinte estrutura:
 {
   "score": <inteiro de 0 a 10>,
   "matched_skills": ["skill1", "skill2"],
+  "familiar_skills": ["skill_familiar1", "skill_familiar2"],
   "missing_skills": ["skill_faltante1"],
   "seniority_match": "exato | acima | abaixo | não informado",
   "summary": "<2-3 frases explicando o match em portugues>"
 }
 
 Critérios para o score:
-- 9-10: Match excelente, candidato tem quase todos os requisitos
-- 7-8: Match muito bom, pequenas lacunas preenchíveis
+- 9-10: Match excelente, candidato tem quase todos os requisitos profissionais
+- 7-8: Match muito bom, pequenas lacunas preenchíveis (skills familiares contam aqui)
 - 5-6: Match razoável, algumas lacunas relevantes
 - 3-4: Match fraco, muitas lacunas importantes
 - 0-2: Vaga muito fora do perfil do candidato
 
 Considere:
 - Overlap de stack técnica (linguagens, frameworks, ferramentas)
+- Diferença entre experiência profissional e conhecimento acadêmico/pessoal
 - Senioridade e anos de experiência
 - Tipo de trabalho e responsabilidades
 - Tecnologias que são diferencial vs obrigatórias
@@ -92,6 +110,7 @@ class JobAnalyzer:
 
         job.score = int(data.get("score", 0))
         job.matched_skills = data.get("matched_skills", [])
+        job.familiar_skills = data.get("familiar_skills", [])
         job.missing_skills = data.get("missing_skills", [])
         job.seniority_match = data.get("seniority_match", "")
         job.summary = data.get("summary", "")
