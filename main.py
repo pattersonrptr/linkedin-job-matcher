@@ -34,8 +34,8 @@ from analyzer import JobAnalyzer
 from anti_block import RateLimiter
 from llm import LLMClient
 from models import JobFilter, JobResult
-from scraper import LinkedInScraper
-from session_manager import get_linkedin_cookies
+from scraper import LinkedInScraper, SessionExpiredError
+from session_manager import get_linkedin_cookies, fetch_cookies_via_browser
 from storage import (
     export_csv,
     get_all_jobs,
@@ -287,26 +287,22 @@ def run_full(
         else:
             console.print("[yellow]LLM indisponível para gerar queries — usando config.toml[/yellow]")
 
-    console.print(Panel("[bold blue]Coletando vagas do LinkedIn...[/bold blue]"))
-
-    with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"),
-                  console=console) as progress:
-        task = progress.add_task("Buscando vagas...", total=max_jobs)
-        all_jobs: list[JobResult] = []
+    def _do_scrape(scraper_instance, queries, collected_ids):
+        """Executa scraping de todas as queries. Retorna (all_jobs, new_jobs)."""
+        all_jobs_inner: list[JobResult] = []
 
         if args.resume:
             stored = get_all_jobs(conn)
-            all_jobs = list(stored)
-            progress.update(task, completed=len(all_jobs))
+            all_jobs_inner = list(stored)
 
-        for qc in queries_cfg:
-            current_count = len(all_jobs)
+        for qc in queries:
+            current_count = len(all_jobs_inner)
             if current_count >= max_jobs:
                 break
 
             console.print(f"\n  [dim]Query: {qc['query']} (location={qc.get('location', '')})[/dim]")
 
-            search_results = scraper.search_jobs(
+            search_results = scraper_instance.search_jobs(
                 queries_config=[qc],
                 max_jobs=max_jobs - current_count,
                 listed_at=listed_at,
@@ -314,13 +310,43 @@ def run_full(
             )
 
             for j in search_results:
-                if j.job_id in already_collected:
+                if j.job_id in collected_ids:
                     continue
-                all_jobs.append(j)
+                all_jobs_inner.append(j)
                 upsert_job(conn, j)
-                progress.update(task, advance=1)
 
-    new_jobs = [j for j in all_jobs if j.job_id not in already_collected]
+        new = [j for j in all_jobs_inner if j.job_id not in collected_ids]
+        return all_jobs_inner, new
+
+    console.print(Panel("[bold blue]Coletando vagas do LinkedIn...[/bold blue]"))
+
+    try:
+        all_jobs, new_jobs = _do_scrape(scraper, queries_cfg, already_collected)
+    except SessionExpiredError:
+        console.print("\n[yellow bold]Sessão LinkedIn expirada (redirect loop). Tentando renovar cookies...[/yellow bold]")
+        email = os.getenv("LINKEDIN_EMAIL", "")
+        password = os.getenv("LINKEDIN_PASSWORD", "")
+        if email and password:
+            try:
+                new_li_at, new_jsessionid = fetch_cookies_via_browser(
+                    email, password, env_path,
+                )
+                scraper = LinkedInScraper(new_li_at, new_jsessionid, rate_limiter)
+                console.print("[green]Cookies renovados! Retentando busca...[/green]")
+                all_jobs, new_jobs = _do_scrape(scraper, queries_cfg, already_collected)
+            except SessionExpiredError:
+                console.print("[red]Sessão expirou novamente após renovação. Abortando scraping.[/red]")
+                all_jobs, new_jobs = [], []
+            except Exception as refresh_exc:
+                console.print(f"[red]Falha ao renovar cookies: {refresh_exc}[/red]")
+                console.print("[dim]Atualize LI_AT e JSESSIONID manualmente no .env[/dim]")
+                all_jobs, new_jobs = [], []
+        else:
+            console.print(
+                "[red]LINKEDIN_EMAIL/LINKEDIN_PASSWORD não definidos no .env.\n"
+                "Atualize LI_AT e JSESSIONID manualmente.[/red]"
+            )
+            all_jobs, new_jobs = [], []
     console.print(f"\n[green]{len(new_jobs)} novas vagas coletadas.[/green]\n")
 
     if args.scrape_only:

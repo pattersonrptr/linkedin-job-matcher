@@ -15,6 +15,11 @@ from models import JobResult
 
 logger = logging.getLogger(__name__)
 
+
+class SessionExpiredError(Exception):
+    """Levantada quando a sessão LinkedIn expirou (redirect loop)."""
+    pass
+
 # Mapeamento de workplace type URN para string legível
 _WORKPLACE_TYPE_MAP: dict[str, str] = {
     "1": "onsite",
@@ -150,6 +155,11 @@ class LinkedInScraper:
                     limit=limit,
                 )
             except Exception as exc:
+                if "redirect" in str(exc).lower():
+                    raise SessionExpiredError(
+                        f"Sessão LinkedIn expirada (redirect loop na query '{query_text}'). "
+                        "Renove LI_AT/JSESSIONID no .env."
+                    ) from exc
                 logger.error("Erro na busca '%s': %s", query_text, exc)
                 continue
 
