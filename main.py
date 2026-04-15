@@ -125,6 +125,8 @@ Exemplos:
     mode.add_argument("--export", nargs="?", const="resultados.csv", default=None,
                       metavar="PATH",
                       help="Exporta resultados filtrados para CSV (default: resultados.csv)")
+    mode.add_argument("--sync-profile", action="store_true",
+                      help="Importa dados do perfil LinkedIn logado e atualiza my_profile.txt")
 
     # ── Overrides de coleta ──
     collect = parser.add_argument_group("Opções de coleta")
@@ -540,6 +542,25 @@ def main() -> None:
     # ── Carregar config ──
     cfg = load_config(BASE_DIR / args.config)
     profile_path = args.profile or (BASE_DIR / "my_profile.txt")
+
+    # ── Modo --sync-profile ──
+    if args.sync_profile:
+        from profile_sync import sync_profile
+        console.print("[bold blue]Importando dados do perfil LinkedIn...[/bold blue]")
+        try:
+            li_at, jsessionid = get_linkedin_cookies(env_path=dotenv_path)
+            result = sync_profile(
+                li_at=li_at,
+                jsessionid=jsessionid,
+                profile_path=Path(profile_path),
+                merge=True,
+            )
+            console.print(f"[green]Perfil atualizado em {profile_path}[/green]")
+            console.print("[dim]Dados do LinkedIn mesclados com o perfil existente.[/dim]")
+        except Exception as exc:
+            console.print(f"[red bold]Erro ao sincronizar perfil: {exc}[/red bold]")
+        return
+
     profile_text = load_profile(profile_path)
 
     min_score = cfg["app"].get("min_score", 6)
