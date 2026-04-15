@@ -107,3 +107,63 @@ class LLMClient:
 
         logger.error("Falha ao analisar job após %d tentativas. Ultimo erro: %s", self._max_retries, last_error)
         return None
+
+    def generate_queries(self, profile_text: str, location: str = "Brazil") -> list[dict] | None:
+        """
+        Gera queries de busca LinkedIn a partir do perfil do candidato.
+        Retorna lista de dicts no formato do config.toml [[queries]] ou None se falhar.
+        """
+        prompt = (
+            "Você é um especialista em recrutamento técnico. Analise o perfil do "
+            "candidato abaixo e gere entre 3 e 6 queries de busca otimizadas para "
+            "encontrar vagas compatíveis no LinkedIn.\n\n"
+            "Regras:\n"
+            "- Foque nas skills profissionais (stack principal) do candidato\n"
+            "- Cada query deve ter termos que aparecem em títulos de vagas reais\n"
+            "- Varie entre os diferentes perfis do candidato (ex: backend, cloud, devops)\n"
+            "- Use termos em inglês (LinkedIn busca global)\n"
+            "- Não repita a mesma combinação de palavras\n\n"
+            "Retorne APENAS um JSON válido:\n"
+            "{\n"
+            '  "queries": [\n'
+            '    {"query": "termo de busca", "location": "' + location + '", '
+            '"experience": ["4"], "job_type": ["F"], "remote": ["2", "3"]},\n'
+            "    ...\n"
+            "  ]\n"
+            "}\n\n"
+            f"## PERFIL DO CANDIDATO\n{profile_text}\n\n"
+            "Retorne APENAS o JSON."
+        )
+
+        last_error = None
+        for attempt in range(self._max_retries):
+            try:
+                response = self._client.chat.completions.create(
+                    model=self._model,
+                    messages=[{"role": "user", "content": prompt}],
+                    max_tokens=self._max_tokens,
+                    temperature=0.5,
+                )
+                raw = response.choices[0].message.content
+                if not raw:
+                    continue
+
+                data = extract_json(raw)
+                if data and "queries" in data and isinstance(data["queries"], list):
+                    return data["queries"]
+
+                logger.warning(
+                    "Formato inesperado na geração de queries (tentativa %d): %s",
+                    attempt + 1, raw[:300],
+                )
+            except Exception as exc:
+                last_error = exc
+                wait = min(2 ** (attempt + 1) + 1, 30)
+                logger.warning(
+                    "Erro ao gerar queries (tentativa %d/%d): %s. Aguardando %ds...",
+                    attempt + 1, self._max_retries, exc, wait,
+                )
+                time.sleep(wait)
+
+        logger.error("Falha ao gerar queries após %d tentativas. Ultimo erro: %s", self._max_retries, last_error)
+        return None

@@ -137,6 +137,8 @@ Exemplos:
                          help="Ignorar vagas fechadas (padrão: ativado)")
     collect.add_argument("--no-skip-closed", dest="skip_closed", action="store_false",
                          help="Incluir vagas fechadas")
+    collect.add_argument("--auto-queries", action="store_true",
+                         help="Gerar queries automaticamente via LLM a partir do perfil (fallback: config.toml)")
 
     # ── Filtros de exibição / show ──
     filters = parser.add_argument_group("Filtros de exibição")
@@ -265,6 +267,25 @@ def run_full(
     if args.resume:
         already_collected = get_collected_job_ids(conn)
         console.print(f"[dim]Resume: {len(already_collected)} jobs já coletados no banco.[/dim]")
+
+    # ── Auto-queries via LLM ──
+    if getattr(args, "auto_queries", False) and llm_api_key:
+        console.print("[dim]Gerando queries automaticamente a partir do perfil...[/dim]")
+        llm_for_queries = LLMClient(
+            api_key=llm_api_key,
+            model=llm_model,
+            max_tokens=llm_cfg.get("max_tokens", 1024),
+            temperature=llm_cfg.get("temperature", 0.3),
+            timeout=llm_cfg.get("timeout", 30),
+        )
+        auto = llm_for_queries.generate_queries(profile_text)
+        if auto:
+            console.print(f"[green]{len(auto)} queries geradas pela LLM:[/green]")
+            for q in auto:
+                console.print(f"  [dim]• {q.get('query', '?')} (location={q.get('location', '')})[/dim]")
+            queries_cfg = auto
+        else:
+            console.print("[yellow]LLM indisponível para gerar queries — usando config.toml[/yellow]")
 
     console.print(Panel("[bold blue]Coletando vagas do LinkedIn...[/bold blue]"))
 
