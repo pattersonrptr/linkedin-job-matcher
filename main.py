@@ -453,6 +453,7 @@ def display_from_db(conn, job_filter: JobFilter) -> None:
             f"{badge_line}{salary_line}\n\n"
             f"[{color}]Score: {job.score}/10[/{color}]  |  Seniority: {job.seniority_match}\n\n"
             f"OK: [green]{', '.join(job.matched_skills) or '—'}[/green]\n"
+            f"Familiar: [cyan]{', '.join(job.familiar_skills) or '—'}[/cyan]\n"
             f"Falta: [red]{', '.join(job.missing_skills) or 'nenhuma lacuna crítica'}[/red]\n\n"
             f"Resumo: {job.summary}\n\n"
             f"[link={job.link}]🔗 Ver vaga no LinkedIn[/link]",

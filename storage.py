@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS jobs (
     description TEXT DEFAULT '',
     score INTEGER,
     matched_skills TEXT DEFAULT '[]',
+    familiar_skills TEXT DEFAULT '[]',
     missing_skills TEXT DEFAULT '[]',
     seniority_match TEXT DEFAULT '',
     summary TEXT DEFAULT '',
@@ -51,6 +52,7 @@ _MIGRATION_COLUMNS: list[tuple[str, str]] = [
     ("salary_max", "INTEGER"),
     ("salary_currency", "TEXT DEFAULT ''"),
     ("listed_at_ts", "INTEGER DEFAULT 0"),
+    ("familiar_skills", "TEXT DEFAULT '[]'"),
 ]
 
 
@@ -86,6 +88,7 @@ def job_to_row(job: JobResult) -> dict:
         "description": job.description,
         "score": job.score,
         "matched_skills": json.dumps(job.matched_skills, ensure_ascii=False),
+        "familiar_skills": json.dumps(job.familiar_skills, ensure_ascii=False),
         "missing_skills": json.dumps(job.missing_skills, ensure_ascii=False),
         "seniority_match": job.seniority_match,
         "summary": job.summary,
@@ -122,6 +125,7 @@ def row_to_job(row: sqlite3.Row) -> JobResult:
         description=str(row["description"] or ""),
         score=row["score"],
         matched_skills=_loads(row["matched_skills"]),
+        familiar_skills=_loads(row["familiar_skills"] if "familiar_skills" in keys else None),
         missing_skills=_loads(row["missing_skills"]),
         seniority_match=str(row["seniority_match"] or ""),
         summary=str(row["summary"] or ""),
@@ -144,13 +148,13 @@ def upsert_job(conn: sqlite3.Connection, job: JobResult) -> None:
         """
         INSERT INTO jobs (
             job_id, title, company, location, country, link, description,
-            score, matched_skills, missing_skills, seniority_match,
+            score, matched_skills, familiar_skills, missing_skills, seniority_match,
             summary, query_source,
             is_closed, is_easy_apply, work_type,
             has_salary, salary_min, salary_max, salary_currency, listed_at_ts
         ) VALUES (
             :job_id, :title, :company, :location, :country, :link, :description,
-            :score, :matched_skills, :missing_skills, :seniority_match,
+            :score, :matched_skills, :familiar_skills, :missing_skills, :seniority_match,
             :summary, :query_source,
             :is_closed, :is_easy_apply, :work_type,
             :has_salary, :salary_min, :salary_max, :salary_currency, :listed_at_ts
@@ -164,6 +168,7 @@ def upsert_job(conn: sqlite3.Connection, job: JobResult) -> None:
             description = excluded.description,
             score = excluded.score,
             matched_skills = excluded.matched_skills,
+            familiar_skills = excluded.familiar_skills,
             missing_skills = excluded.missing_skills,
             seniority_match = excluded.seniority_match,
             summary = excluded.summary,
