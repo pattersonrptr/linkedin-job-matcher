@@ -47,3 +47,4 @@ class JobFilter:
     work_type: str = "all"           # "remote" | "hybrid" | "onsite" | "all"
     company: str = ""                # substring match (case-insensitive)
     sort: str = "score"              # "score" | "date"
+    max_age_days: int | None = None  # exibir apenas vagas dos últimos N dias
