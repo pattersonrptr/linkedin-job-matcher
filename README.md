@@ -129,6 +129,13 @@ python main.py --show --easy-apply --company "Google"
 python main.py --export vagas.csv --min-score 6 --work-type remote
 ```
 
+### Limpar vagas antigas
+
+```bash
+python main.py --purge 14          # remove vagas com mais de 14 dias
+python main.py --show --max-age 7   # mostra apenas vagas dos últimos 7 dias (sem deletar)
+```
+
 ### Retomar busca interrompida
 
 ```bash
@@ -148,6 +155,8 @@ python main.py --resume
 | `--easy-apply` | flag | Só Easy Apply |
 | `--company NOME` | str | Filtro por empresa (substring) |
 | `--sort` | score/date | Ordenação dos resultados |
+| `--max-age N` | int (dias) | Mostrar apenas vagas dos últimos N dias |
+| `--purge N` | int (dias) | Remove vagas com mais de N dias do banco |
 | `--date-posted` | 24h/week/month/any | Data de postagem |
 | `--skip-closed` / `--no-skip-closed` | flag | Ignorar vagas fechadas (padrão: ativo) |
 | `--max-jobs N` | int | Máximo de vagas a coletar |

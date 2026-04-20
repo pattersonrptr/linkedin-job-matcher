@@ -206,11 +206,31 @@ def get_collected_job_ids(conn: sqlite3.Connection) -> set[str]:
     return {str(r["job_id"]) for r in cursor.fetchall()}
 
 
+def purge_old_jobs(conn: sqlite3.Connection, max_age_days: int) -> int:
+    """Remove vagas com mais de max_age_days dias no banco. Retorna quantidade removida."""
+    import time
+    cutoff_ts = int(time.time()) - (max_age_days * 86_400)
+    # Remove por listed_at_ts (data de postagem no LinkedIn) quando disponível,
+    # senão por created_at (data de inserção no banco)
+    cursor = conn.execute(
+        """
+        DELETE FROM jobs
+        WHERE (listed_at_ts > 0 AND listed_at_ts < ?)
+           OR (listed_at_ts = 0 AND created_at < datetime(?, 'unixepoch'))
+        """,
+        (cutoff_ts, cutoff_ts),
+    )
+    conn.commit()
+    return cursor.rowcount
+
+
 def get_filtered_jobs(
     conn: sqlite3.Connection,
     job_filter: JobFilter | None = None,
 ) -> list[JobResult]:
     """Retorna jobs de acordo com os filtros, ordenados conforme job_filter.sort."""
+    import time
+
     f = job_filter or JobFilter()
 
     where_parts: list[str] = []
@@ -247,6 +267,15 @@ def get_filtered_jobs(
     elif f.country == "international":
         where_parts.append("country != 'Brazil'")
         where_parts.append("country != ''")
+
+    if f.max_age_days and f.max_age_days > 0:
+        cutoff_ts = int(time.time()) - (f.max_age_days * 86_400)
+        where_parts.append(
+            "((listed_at_ts > 0 AND listed_at_ts >= ?) "
+            "OR (listed_at_ts = 0 AND created_at >= datetime(?, 'unixepoch')))"
+        )
+        params.append(cutoff_ts)
+        params.append(cutoff_ts)
 
     where_clause = ("WHERE " + " AND ".join(where_parts)) if where_parts else ""
 

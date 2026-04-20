@@ -43,6 +43,7 @@ from storage import (
     get_collected_job_ids,
     get_filtered_jobs,
     init_db,
+    purge_old_jobs,
     upsert_job,
 )
 
@@ -127,6 +128,9 @@ Exemplos:
                       help="Exporta resultados filtrados para CSV (default: resultados.csv)")
     mode.add_argument("--sync-profile", action="store_true",
                       help="Importa dados do perfil LinkedIn logado e atualiza my_profile.txt")
+    mode.add_argument("--purge", type=int, default=None,
+                      metavar="DIAS",
+                      help="Remove vagas com mais de N dias do banco (ex: --purge 14)")
 
     # ── Overrides de coleta ──
     collect = parser.add_argument_group("Opções de coleta")
@@ -167,6 +171,9 @@ Exemplos:
     filters.add_argument("--sort",
                          choices=["score", "date"], default="score",
                          help="Ordenar por score (padrão) ou data de postagem")
+    filters.add_argument("--max-age", type=int, default=None,
+                         metavar="DIAS",
+                         help="Mostrar apenas vagas dos últimos N dias (ex: --max-age 7)")
 
     return parser.parse_args()
 
@@ -183,6 +190,7 @@ def build_job_filter(args: argparse.Namespace, min_score: int) -> JobFilter:
         work_type=args.work_type,
         company=args.company,
         sort=args.sort,
+        max_age_days=args.max_age,
     )
 
 
@@ -430,6 +438,8 @@ def display_from_db(conn, job_filter: JobFilter) -> None:
         active.append("easy-apply")
     if job_filter.company:
         active.append(f"empresa~{job_filter.company}")
+    if job_filter.max_age_days:
+        active.append(f"últimos {job_filter.max_age_days}d")
     filter_str = "  [dim]Filtros: " + " | ".join(active) + "[/dim]" if active else ""
 
     if not jobs:
@@ -559,6 +569,17 @@ def main() -> None:
             console.print("[dim]Dados do LinkedIn mesclados com o perfil existente.[/dim]")
         except Exception as exc:
             console.print(f"[red bold]Erro ao sincronizar perfil: {exc}[/red bold]")
+        return
+
+    # ── Modo --purge ──
+    if args.purge is not None:
+        conn = init_db(args.db)
+        removed = purge_old_jobs(conn, args.purge)
+        if removed:
+            console.print(f"[green]{removed} vaga(s) com mais de {args.purge} dias removida(s) do banco.[/green]")
+        else:
+            console.print(f"[yellow]Nenhuma vaga com mais de {args.purge} dias encontrada.[/yellow]")
+        conn.close()
         return
 
     profile_text = load_profile(profile_path)
